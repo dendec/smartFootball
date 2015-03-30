@@ -2,33 +2,29 @@
 SoftwareSerial RFID(2, 3); // RX and TX
 
 byte playerID[16];
+int redScore;
+int blueScore;
 
 void setup()
 {
+  redScore = 0;
+  blueScore = 0;
   pinMode(8, OUTPUT);  // beeper output
   RFID.begin(9600);    // start serial to RFID reader
   Serial.begin(9600);  // start serial to PC 
   Serial.println("ready");
+  RFID.flush();
   getPlayers();
 }
 
 void loop()
-{
- 
+{ 
+  if((redScore > 9) || (blueScore > 9)){
+    DisplayResult();    
+    setup();
+  } else 
+   ListenSensors();
 }
-
-void beep(int freq, float duration)
-{
-  int t = (int)(1 / 2 / freq * 1000000);
-  int N = (int)(duration * freq);
-  for(int j = 0; j < N; j++){
-    digitalWrite(8, HIGH);   // turn the LED on (HIGH is the voltage level)
-    delayMicroseconds(t);               // wait for a second
-    digitalWrite(8, LOW);    // turn the LED off by making the voltage LOW
-    delayMicroseconds(t);               // wait for a second
-  }
-}
-
 
 void getPlayers(){
   int n = 0;
@@ -42,7 +38,7 @@ void getPlayers(){
       isEqual &= (playerID[i] == b);
       playerID[i++] = b;
       if ((RFID.available() == 0) && (!isEqual)) {
-        beep(1000, 0.1);
+        tone(8, 2000, 50);
         for(int z = 0; z < 16; z++)
           Serial.print(playerID[z]);
         Serial.println();
@@ -50,4 +46,32 @@ void getPlayers(){
       }
     }
   }
+}
+
+void DisplayScore(){
+  Serial.print(redScore);
+  Serial.print(":");
+  Serial.println(blueScore);
+}
+
+void DisplayResult(){
+  if (blueScore > redScore) 
+    Serial.println("red win");
+  else
+    Serial.println("blue win");
+}
+
+void ListenSensors(){
+  int sensor1 = analogRead(A1); 
+  int sensor2 = analogRead(A5); 
+  if(sensor1 < 300) {
+    redScore ++;
+    DisplayScore();
+    delay(100);
+  }  
+  if(sensor2 < 300) {
+    blueScore ++;
+    DisplayScore();
+    delay(100);
+  }  
 }
