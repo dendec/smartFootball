@@ -3,67 +3,57 @@ var moment = require('moment');
 var rh = require('../utils/responseHelper');
 var router = express.Router();
 
-router.get('/', function (req, res, next) {
-    var db = req.db;
-    var games = db.get('games');
-    games.find({}, {}, rh.sendResponse(res));
-});
+router.get('/', getCollection(function (collection, res) {
+    collection.find({}, {}, rh.sendResponse(res));
+}));
 
-router.get('/:id', function (req, res) {
-    var db = req.db;
-    var games = db.get('games');
-    games.findById(req.params.id, {}, rh.sendResponse(res));
-});
+router.get('/:id', getCollection(function (collection, res, req) {
+    collection.findById(req.params.id, {}, rh.sendResponse(res));
+}));
 
-router.post('/:id/:team', function (req, res) {
-    var db = req.db;
-    var games = db.get('games');
-    games.findById(req.params.id, {}, rh.sendResponse(res, function (doc) {
-        console.log(doc);
+router.post('/:id/:team', getCollection(function (collection, res, req) {
+    collection.findById(req.params.id, {}, rh.sendResponse(res, function (doc) {
         if (doc == null)
             rh.sendError(res, 404, "invalid game id");
-        else
+        else {
+            var currentMoment = Date().getTime();
             switch (req.params.team) {
                 case 'red':
-                    doc.red.goals.push(moment() - moment(doc.start));
-                    games.update({'_id': doc._id}, doc, rh.sendResponse(res));
+                    doc.red.goals.push(currentMoment - doc.start);
                     break;
                 case 'blue':
-                    doc.blue.goals.push(moment() - moment(doc.start));
-                    games.update({'_id': doc._id}, doc, rh.sendResponse(res));
+                    doc.blue.goals.push(currentMoment - doc.start);
                     break;
                 default:
                     rh.sendError(res, 404, "invalid team id");
+                    return;
             }
+            if ((doc.red.goals.length == 10) || (doc.blue.goals.length == 10))
+                doc.stop = currentMoment;
+            collection.update({'_id': doc._id}, doc, rh.sendResponse(res));
+        }
     }));
-});
+}));
 
-router.post('/', function (req, res) {
-    var db = req.db;
+router.post('/', getCollection(function (collection, res, req) {
     if (isCorrectGameRequest(req.body)) {
-        var games = db.get('games');
-        games.insert(getGame(req.body), rh.sendResponse(res));
+        collection.insert(getGame(req.body), rh.sendResponse(res));
     }
     else
         rh.sendError(res, 400, "wrong JSON");
-});
+}));
 
-router.delete('/', function (req, res) {
-    var db = req.db;
-    var request = {};
-    if (Object.keys(request).length > 0) {
-        var games = db.get('games');
-        games.remove(request, rh.sendResponse(res));
-    }
+router.delete('/', getCollection(function (collection, res, req) {
+    var request = req.body;
+    if (Object.keys(request).length > 0)
+        collection.remove(request, rh.sendResponse(res));
     else
-        rh.sendError(res, 400, "wrong JSON");
-});
+        rh.sendError(res, 400, "empty JSON");
+}));
 
-router.delete('/all', function (req, res) {
-    var db = req.db;
-    var games = db.get('games');
-    games.remove({}, rh.sendResponse(res));
-});
+router.delete('/all', getCollection(function (collection, res) {
+    collection.remove({}, rh.sendResponse(res));
+}));
 
 //ra - red attacker
 //rd - red defender
@@ -86,9 +76,13 @@ function getGame(gameRequest) {
             defender: gameRequest.bd,
             goals: []
         },
-        start: moment().format("YYYY-MM-DD HH:mm:ss.SSS")
+        start: Date().getTime()
     };
     return game;
+}
+
+function getCollection(response) {
+    return rh.getCollection("games", response);
 }
 
 module.exports = router;

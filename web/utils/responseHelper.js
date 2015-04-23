@@ -15,6 +15,13 @@ module.exports = {
             else
                 onSuccess(doc);
         };
+    },
+    getCollection: function (collectionName, response) {
+        return function (req, res) {
+            var db = req.db;
+            var collection = db.get(collectionName);
+            response(collection, res, req);
+        };
     }
 };
 
