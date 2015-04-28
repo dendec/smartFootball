@@ -1,6 +1,7 @@
 #include <SoftwareSerial.h>
 #include <string.h>
 #include "ESP8266.h"
+#include "LedControlMS.h"
 SoftwareSerial mySerial(10, 11);
 ESP8266 wifi(mySerial);
 #define SSID        "HYS OFFICE WC"
@@ -8,11 +9,15 @@ ESP8266 wifi(mySerial);
 #define HOST_NAME   "192.168.0.46"
 #define HOST_PORT   (8888)
 
+#define NBR_MTX 2 
+LedControl lc=LedControl(12,11,10, NBR_MTX);
+
 int redScore;
 int blueScore;
 
 void setup()
 {
+	setup_ledmatrix();
   redScore = 0;
   blueScore = 0;
   pinMode(8, OUTPUT);  // beeper output
@@ -21,6 +26,37 @@ void setup()
     Serial.println("ready");
   send_ready();
   getPlayers();
+}
+
+void setup_ledmatrix(){
+	if(lc)
+	{
+		for (int i=0; i< NBR_MTX; i++){
+			//lc.shutdown(i,false);
+			/* Set the brightness to a low value */
+			lc.setIntensity(i,10);
+			/* and clear the display */
+			lc.clearDisplay(i);
+		}
+		delay(100);
+		lc.clearAll();
+	}
+}
+void show_score_on_ledmatrix(int red, int blue)
+{
+	if(red > 10)
+		red = 10;
+	if(blue > 10)
+		blue = 10;	
+		
+	if(lc)
+	{
+		lc.displayDigit(0, lc.getDigitArrayPosition(red,true));
+		lc.displayDigit(1, lc.getDigitArrayPosition(blue,false));
+	}
+}
+void show_result_on_ledmatrix(bool redWins)
+{
 }
 
 boolean setup_wifi(){
@@ -104,6 +140,7 @@ void DisplayScore(){
   Serial.print(redScore);
   Serial.print(":");
   Serial.println(blueScore);
+  show_score_on_ledmatrix(redScore, blueScore)
 }
 
 void DisplayResult(){
