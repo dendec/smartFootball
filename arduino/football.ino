@@ -10,7 +10,12 @@ ESP8266 wifi(mySerial);
 #define HOST_PORT   (8888)
 
 #define NBR_MTX 2 
-LedControl lc=LedControl(12,11,10, NBR_MTX);
+/*
+ pin 7 is connected to the DataIn 
+ pin 6 is connected to the CLK 
+ pin 5 is connected to LOAD 
+ */
+LedControl lc=LedControl(7,6,5, NBR_MTX);
 
 int redScore;
 int blueScore;
