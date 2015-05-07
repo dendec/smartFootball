@@ -2,30 +2,34 @@
 #include <string.h>
 #include "ESP8266.h"
 #include "LedControlMS.h"
-SoftwareSerial mySerial(10, 11);
+/*
+ * RX is digital pin 11 (connect to TX of ESP8266)
+ * TX is digital pin 10 (connect to RX of ESP8266)
+ */
+SoftwareSerial mySerial(11, 10);
 ESP8266 wifi(mySerial);
 #define SSID        "HYS OFFICE WC"
 #define PASSWORD    "380677117432"
 #define HOST_NAME   "192.168.0.46"
 #define HOST_PORT   (8888)
-
+#define BEEPER 8 
 #define NBR_MTX 2 
 /*
  pin 7 is connected to the DataIn 
  pin 6 is connected to the CLK 
  pin 5 is connected to LOAD 
  */
-LedControl lc=LedControl(7,6,5, NBR_MTX);
+LedControl lc = LedControl(7, 6, 5, NBR_MTX);
 
 int redScore;
 int blueScore;
 
 void setup()
 {
-	setup_ledmatrix();
+  setup_ledmatrix();
   redScore = 0;
   blueScore = 0;
-  pinMode(8, OUTPUT);  // beeper output
+  pinMode(BEEPER, OUTPUT);  // beeper output
   Serial.begin(9600);  // start serial to PC 
   if(setup_wifi())  
     Serial.println("ready");
@@ -34,32 +38,27 @@ void setup()
 }
 
 void setup_ledmatrix(){
-	if(lc)
-	{
-		for (int i=0; i< NBR_MTX; i++){
-			//lc.shutdown(i,false);
-			/* Set the brightness to a low value */
-			lc.setIntensity(i,10);
-			/* and clear the display */
-			lc.clearDisplay(i);
-		}
-		delay(100);
-		lc.clearAll();
-	}
+  for (int i=0; i< NBR_MTX; i++){
+    //lc.shutdown(i,false);
+    /* Set the brightness to a low value */
+    lc.setIntensity(i, 10);
+    /* and clear the display */
+    lc.clearDisplay(i);
+  }
+  delay(100);
+  lc.clearAll();
 }
+
 void show_score_on_ledmatrix(int red, int blue)
 {
-	if(red > 10)
-		red = 10;
-	if(blue > 10)
-		blue = 10;	
-		
-	if(lc)
-	{
-		lc.displayDigit(0, lc.getDigitArrayPosition(red,true));
-		lc.displayDigit(1, lc.getDigitArrayPosition(blue,false));
-	}
+  if(red > 10)
+    red = 10;
+  if(blue > 10)
+    blue = 10;	
+  lc.displayDigit(0, lc.getDigitArrayPosition(red,true));
+  lc.displayDigit(1, lc.getDigitArrayPosition(blue,false));
 }
+
 void show_result_on_ledmatrix(bool redWins)
 {
 }
@@ -136,7 +135,7 @@ void getPlayers(){
       memcpy(prevPlayerId, playerId, 12);
       Serial.println(playerId);
       send_playerId(playerId);
-      tone(8, 1000, 50);
+      tone(BEEPER, 1000, 50);
     }
   }
 }
@@ -145,7 +144,7 @@ void DisplayScore(){
   Serial.print(redScore);
   Serial.print(":");
   Serial.println(blueScore);
-  show_score_on_ledmatrix(redScore, blueScore)
+  show_score_on_ledmatrix(redScore, blueScore);
 }
 
 void DisplayResult(){
