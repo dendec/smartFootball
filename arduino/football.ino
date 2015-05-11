@@ -15,11 +15,11 @@ ESP8266 wifi(mySerial);
 #define BEEPER 8 
 #define NBR_MTX 2 
 /*
- pin 7 is connected to the DataIn 
- pin 6 is connected to the CLK 
- pin 5 is connected to LOAD 
+ pin 5 is connected to the DataIn 
+ pin 7 is connected to the CLK 
+ pin 6 is connected to LOAD 
  */
-LedControl lc = LedControl(7, 6, 5, NBR_MTX);
+LedControl lc = LedControl(5, 7, 6, NBR_MTX);
 
 int redScore;
 int blueScore;
@@ -39,9 +39,9 @@ void setup()
 
 void setup_ledmatrix(){
   for (int i=0; i< NBR_MTX; i++){
-    //lc.shutdown(i,false);
+    lc.shutdown(i,false);
     /* Set the brightness to a low value */
-    lc.setIntensity(i, 10);
+    lc.setIntensity(i, 8);
     /* and clear the display */
     lc.clearDisplay(i);
   }
@@ -55,8 +55,8 @@ void show_score_on_ledmatrix(int red, int blue)
     red = 10;
   if(blue > 10)
     blue = 10;	
-  lc.displayDigit(0, lc.getDigitArrayPosition(red,true));
-  lc.displayDigit(1, lc.getDigitArrayPosition(blue,false));
+  lc.displayDigit(0, lc.getDigitArrayPosition(red, true));
+  lc.displayDigit(1, lc.getDigitArrayPosition(blue, false));
 }
 
 void show_result_on_ledmatrix(bool redWins)
@@ -155,15 +155,17 @@ void DisplayResult(){
 }
 
 void ListenSensors(){
-  int sensor1 = analogRead(A1); 
-  int sensor2 = analogRead(A5); 
-  if(sensor1 < 300) {
+  int sensor1 = analogRead(A3); 
+  int sensor2 = analogRead(A4); 
+  Serial.println(sensor1);
+  Serial.println(sensor2);
+  if(sensor1 > 0) {
     redScore ++;
     DisplayScore();
     send_red();
     delay(100);
   }  
-  if(sensor2 < 300) {
+  if(sensor2 > 0) {
     blueScore ++;
     DisplayScore();
     send_blue();

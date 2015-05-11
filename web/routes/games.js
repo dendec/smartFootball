@@ -16,7 +16,7 @@ router.post('/:id/:team', getCollection(function (collection, res, req) {
         if (doc == null)
             rh.sendError(res, 404, "invalid game id");
         else {
-            var currentMoment = Date().getTime();
+            var currentMoment = new Date().getTime();
             switch (req.params.team) {
                 case 'red':
                     doc.red.goals.push(currentMoment - doc.start);
@@ -76,7 +76,7 @@ function getGame(gameRequest) {
             defender: gameRequest.bd,
             goals: []
         },
-        start: Date().getTime()
+        start: new Date().getTime()
     };
     return game;
 }
