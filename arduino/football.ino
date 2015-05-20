@@ -1,66 +1,40 @@
 #include <SoftwareSerial.h>
 #include <string.h>
+#include "screen.h"
 #include "ESP8266.h"
-#include "LedControlMS.h"
+#define SSID        "HYS OFFICE WC"
+#define PASSWORD    "380677117432"
+#define HOST_NAME   "192.168.0.57"
+#define HOST_PORT   (3000)
+#define BEEPER 8 
+#define NBR_MTX 2 
+#define SENSOR_PIN_RED A1
+#define SENSOR_PIN_BLUE A2
 /*
  * RX is digital pin 11 (connect to TX of ESP8266)
  * TX is digital pin 10 (connect to RX of ESP8266)
  */
 SoftwareSerial mySerial(11, 10);
 ESP8266 wifi(mySerial);
-#define SSID        "HYS OFFICE WC"
-#define PASSWORD    "380677117432"
-#define HOST_NAME   "192.168.0.46"
-#define HOST_PORT   (8888)
-#define BEEPER 8 
-#define NBR_MTX 2 
-/*
- pin 5 is connected to the DataIn 
- pin 7 is connected to the CLK 
- pin 6 is connected to LOAD 
- */
-LedControl lc = LedControl(5, 7, 6, NBR_MTX);
-
 int redScore;
 int blueScore;
 
 void setup()
 {
-  setup_ledmatrix();
+  Serial.begin(9600);
+  setMatrixIntensity(15);
   redScore = 0;
   blueScore = 0;
   pinMode(BEEPER, OUTPUT);  // beeper output
-  Serial.begin(9600);  // start serial to PC 
-  if(setup_wifi())  
+  if(setup_wifi()){  
     Serial.println("ready");
-  send_ready();
-  getPlayers();
-}
-
-void setup_ledmatrix(){
-  for (int i=0; i< NBR_MTX; i++){
-    lc.shutdown(i,false);
-    /* Set the brightness to a low value */
-    lc.setIntensity(i, 8);
-    /* and clear the display */
-    lc.clearDisplay(i);
+    send_ready();
+    get_players();
+    DisplayScore();
   }
-  delay(100);
-  lc.clearAll();
-}
-
-void show_score_on_ledmatrix(int red, int blue)
-{
-  if(red > 10)
-    red = 10;
-  if(blue > 10)
-    blue = 10;	
-  lc.displayDigit(0, lc.getDigitArrayPosition(red, true));
-  lc.displayDigit(1, lc.getDigitArrayPosition(blue, false));
-}
-
-void show_result_on_ledmatrix(bool redWins)
-{
+  else {
+    setup();
+  }
 }
 
 boolean setup_wifi(){
@@ -70,6 +44,25 @@ boolean setup_wifi(){
     wifi.joinAP(SSID, PASSWORD) &&
     wifi.disableMUX() && 
     wifi.createTCP(HOST_NAME, HOST_PORT));
+}
+
+void send_post(char* url, char* contentType, char* content){
+  char request[100] = "POST /";
+  strcat(request, url);
+  strcat(request, " HTTP/1.1\r\nContent-Type:");
+  strcat(request, contentType);
+  strcat(request, "\r\nContent-Length:");
+  int n = strlen(content);
+  char b[2];
+  String str;
+  str=String(n);
+  str.toCharArray(b,2);
+  strcat(request, b);
+  strcat(request, "\r\n\r\n");
+  strcat(request, content);
+  strcat(request, "\r\n\r\n");
+  Serial.println(request);
+  wifi.send((const uint8_t*)request, strlen(request));
 }
 
 void send_ready(){
@@ -109,10 +102,10 @@ void loop()
     ListenSensors();
 }
 
-void getPlayers(){
+void get_players(){
   int n = 0;
-  char playerId[16];
-  char prevPlayerId[16] = "000000000000";
+  char playerId[13] = "000000000000";
+  char prevPlayerId[13] = "000000000000";
   while (n < 4) {
     char resultStr[16];
     Serial.flush();
@@ -121,8 +114,9 @@ void getPlayers(){
     }
     while (Serial.available() == 0){
       delay(10);
+      
     }
-    Serial.readBytesUntil((char)3, resultStr, 14);
+    Serial.readBytesUntil((char)3, resultStr, 13);
     memcpy(playerId, &resultStr[1], 12);
     //Serial.println(playerId);
     //Serial.print("prev: ");
@@ -131,11 +125,12 @@ void getPlayers(){
     //Serial.println(n);
     if((strcmp(playerId, prevPlayerId) != 0) || (n == 0))
     {
+      tone(8, 2000, 50);
+      delay(50);
       n++;
       memcpy(prevPlayerId, playerId, 12);
       Serial.println(playerId);
       send_playerId(playerId);
-      tone(BEEPER, 1000, 50);
     }
   }
 }
@@ -144,7 +139,7 @@ void DisplayScore(){
   Serial.print(redScore);
   Serial.print(":");
   Serial.println(blueScore);
-  show_score_on_ledmatrix(redScore, blueScore);
+  printScore(redScore, blueScore);
 }
 
 void DisplayResult(){
@@ -155,20 +150,25 @@ void DisplayResult(){
 }
 
 void ListenSensors(){
-  int sensor1 = analogRead(A3); 
-  int sensor2 = analogRead(A4); 
-  Serial.println(sensor1);
-  Serial.println(sensor2);
-  if(sensor1 > 0) {
+  int redSensorValue = analogRead(SENSOR_PIN_RED); 
+  int blueSensorValue = analogRead(SENSOR_PIN_BLUE); 
+  //Serial.print(redSensorValue);    
+  //Serial.print("   "); 
+  //Serial.println(blueSensorValue);   
+  if(redSensorValue > 900) {
     redScore ++;
     DisplayScore();
     send_red();
     delay(100);
   }  
-  if(sensor2 > 0) {
+  if(blueSensorValue > 900) {
     blueScore ++;
     DisplayScore();
     send_blue();
     delay(100);
   }  
 }
+
+
+
+
