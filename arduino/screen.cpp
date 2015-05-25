@@ -106,6 +106,11 @@ int clock = 7;   // CLK pin of MAX7219 modul
 int maxInUse = 2;
 MaxMatrix m(data, load, clock, maxInUse);
 
+void clearScreen(){
+  for (int i = 0; i <= 16; i++)
+    m.setColumn(i, 0);
+}
+
 void setMatrixIntensity(int intensity){
   m.init(); // module initialize
   m.setIntensity(intensity); // dot matix intensity 0-15
@@ -123,7 +128,6 @@ void printCharWithShift(int c, int shift_speed){
   printCharacter(maxInUse * 8, c);
   for (int i=0; i < buffer[0] + 1; i++) 
   {
-    if (Serial.available() > 0) return;
     delay(shift_speed);
     m.shiftLeft(false, false);
   }
@@ -131,7 +135,6 @@ void printCharWithShift(int c, int shift_speed){
 
 void printStringWithShift(char* s, int shift_speed){
   while (*s != 0){
-    if (Serial.available() > 0) return;
     printCharWithShift(*s, shift_speed);
     s++;
   }

@@ -1,6 +1,7 @@
 #include <SoftwareSerial.h>
 #include <string.h>
 #include "screen.h"
+#include "melody.h"
 #include "ESP8266.h"
 #define SSID        "HYS OFFICE WC"
 #define PASSWORD    "380677117432"
@@ -18,23 +19,14 @@ SoftwareSerial mySerial(11, 10);
 ESP8266 wifi(mySerial);
 int redScore;
 int blueScore;
+long previousMillis;
 
 void setup()
 {
   Serial.begin(9600);
   setMatrixIntensity(15);
-  redScore = 0;
-  blueScore = 0;
   pinMode(BEEPER, OUTPUT);  // beeper output
-  if(setup_wifi()){  
-    Serial.println("ready");
-    send_ready();
-    get_players();
-    DisplayScore();
-  }
-  else {
-    setup();
-  }
+  footballInitialize();
 }
 
 boolean setup_wifi(){
@@ -66,6 +58,7 @@ void send_post(char* url, char* contentType, char* content){
 }
 
 void send_ready(){
+  Serial.println("ready");
   char *request = "GET /ready HTTP/1.1\r\n\r\n";
   Serial.println(request);
   wifi.send((const uint8_t*)request, strlen(request));
@@ -96,14 +89,28 @@ void loop()
 { 
   if((redScore > 9) || (blueScore > 9)){
     DisplayResult();    
-    setup();
+    footballInitialize();
   } 
   else 
     ListenSensors();
 }
 
+void footballInitialize(){
+  redScore = 0;
+  blueScore = 0;
+  while(!setup_wifi()){
+    printStringWithShift("Connecting...    ", 30);
+  }
+  clearScreen();
+  send_ready();
+  delay(2000);
+  get_players();
+  DisplayScore();
+}
+
 void get_players(){
   int n = 0;
+  boolean passed = false;
   char playerId[13] = "000000000000";
   char prevPlayerId[13] = "000000000000";
   while (n < 4) {
@@ -112,19 +119,41 @@ void get_players(){
     while(Serial.available() > 0) {
       Serial.read();
     }
+    if(n == 0)
+    {
+      printStringWithShift("Red defender    ", 30);
+      printString("R D", 0);
+    }
+    else if((n == 1)&&(passed))
+    {
+      printStringWithShift("Blue defender   ", 30);
+      printString("B D", 0);
+    }
+    else if((n == 2)&&(passed))
+    {
+      printStringWithShift("Red forward    ", 30);
+      printString("R F", 0);
+    }
+    else if((n == 3)&&(passed))
+    {
+      printStringWithShift("Blue forward    ", 30);
+      printString("B F", 0);
+    }
+
     while (Serial.available() == 0){
       delay(10);
-      
     }
     Serial.readBytesUntil((char)3, resultStr, 13);
     memcpy(playerId, &resultStr[1], 12);
-    //Serial.println(playerId);
-    //Serial.print("prev: ");
-    //Serial.println(prevPlayerId);
-    //Serial.print("n: ");
-    //Serial.println(n);
-    if((strcmp(playerId, prevPlayerId) != 0) || (n == 0))
+    Serial.println(playerId);
+    Serial.print("prev: ");
+    Serial.println(prevPlayerId);
+    Serial.print("n: ");
+    Serial.println(n);
+    passed = (strcmp(playerId, prevPlayerId) != 0) || (n == 0);
+    if(passed)
     {
+      clearScreen();
       tone(8, 2000, 50);
       delay(50);
       n++;
@@ -143,10 +172,15 @@ void DisplayScore(){
 }
 
 void DisplayResult(){
-  if (blueScore > redScore) 
+  if (blueScore > redScore) {
     Serial.println("red win");
-  else
+    printStringWithShift("Red win!!!    ", 30);  
+  }
+  else{
     Serial.println("blue win");
+    printStringWithShift("Blue win!!!    ", 30);
+  }
+  playMelody();
 }
 
 void ListenSensors(){
@@ -157,17 +191,31 @@ void ListenSensors(){
   //Serial.println(blueSensorValue);   
   if(redSensorValue > 900) {
     redScore ++;
-    DisplayScore();
+    if (redScore < 10)
+      DisplayScore();
+    else
+      clearScreen();
     send_red();
     delay(100);
   }  
   if(blueSensorValue > 900) {
     blueScore ++;
-    DisplayScore();
+    if (blueScore < 10)
+      DisplayScore();
+    else
+      clearScreen();
     send_blue();
     delay(100);
   }  
 }
+
+
+
+
+
+
+
+
 
 
 
