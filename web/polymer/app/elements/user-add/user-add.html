@@ -1,0 +1,47 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/iron-form/iron-form.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="user-add">
+    <style>
+        :host {
+            display: block;
+        }
+    </style>
+    <template>
+        <iron-ajax
+            id="addUser"
+            url="../../users/"
+            method="POST"
+            handle-as="json"
+            headers='{"Content-Type": "application/json"}'
+            on-response="handleResponse"
+            debounce-duration="300"
+            last-response="{{response}}"></iron-ajax>
+        <div>New user:</div>
+        <form is="iron-form" id="addUserForm" method="post" enctype="application/json" action="/">
+            <paper-input name="name" label="Name" required></paper-input>
+            <paper-input name="rfid" label="RFID" auto-validate pattern="[0-9a-fA-F]{12}" required></paper-input>
+            <paper-button raised
+                          on-click="submitForm">Submit</paper-button>
+        </form>
+    </template>
+</dom-module>
+<script>
+    (function () {
+        Polymer({
+            is: 'user-add',
+            submitForm: function () {
+                this.$.addUser.body = JSON.stringify(this.$.addUserForm.serialize()).trim();
+                if (this.$.addUserForm._validate())
+                    this.$.addUser.generateRequest();
+            },
+            handleResponse: function () {
+                console.log(this.response);
+                page("/users");
+            }
+        });
+    })();
+</script>

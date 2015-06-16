@@ -1,0 +1,95 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Smart football</title>
+        <link rel="stylesheet" href="styles/main.css">
+        <script src="bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+        <link rel="import" href="elements/elements.html">
+    </head>
+    <body unresolved class="fullbleed layout vertical">
+    <template is="dom-bind" id="app">
+        <paper-drawer-panel id="paperDrawerPanel">
+            <div drawer>
+                <paper-toolbar id="drawerToolbar">
+                    <span>Menu</span>
+                </paper-toolbar>
+                <paper-menu class="list" attr-for-selected="data-route" selected="{{route}}">
+                    <a data-route="home" href="/">
+                        <iron-icon icon="home"></iron-icon>
+                        <span>Home</span>
+                    </a>
+                    <a data-route="users" href="/users">
+                        <iron-icon icon="social:group"></iron-icon>
+                        <span>Users</span>
+                    </a>
+                    <a data-route="games" href="/games">
+                        <iron-icon icon="face"></iron-icon>
+                        <span>Games</span>
+                    </a>
+                </paper-menu>
+            </div>
+            <paper-header-panel main mode="waterfall-tall">
+                <paper-toolbar id="mainToolbar">
+                    <button tabindex="1" id="paperToggle" paper-drawer-toggle>
+                        <iron-icon icon="menu" paper-drawer-toggle></iron-icon>
+                    </button>
+                    <span class="flex"></span>
+
+                    <!-- Toolbar icons -->
+                    <paper-icon-button icon="refresh"></paper-icon-button>
+                    <paper-icon-button icon="search"></paper-icon-button>
+                    <div class="middle"></div>
+
+                    <!-- Application name -->
+                    <div class="appname bottom paper-font-display2">Smart football</div>
+                </paper-toolbar>
+
+                <iron-pages attr-for-selected="data-route" selected="{{route}}">
+
+                    <section data-route="home">
+                        <paper-material elevation="1">
+                        </paper-material>
+                    </section>
+                    <section data-route="users">
+                        <paper-material elevation="1">
+                            <user-list id="userList"></user-list>
+                        </paper-material>
+                    </section>
+
+                    <section data-route="user-add">
+                        <paper-material elevation="1">
+                            <user-add id="userAdd"></user-add>
+                        </paper-material>
+                    </section>
+
+                    <section data-route="user-info">
+                        <paper-material elevation="1">
+                        </paper-material>
+                    </section>
+
+                    <section data-route="games">
+                        <paper-material elevation="1">
+                            <game-list id="gameList"></game-list>
+                        </paper-material>
+                    </section>
+
+                </iron-pages>
+            </paper-header-panel>
+        </paper-drawer-panel>
+    </template>
+
+    <script src="scripts/app.js"></script>
+</body>
+
+</html>

@@ -36,8 +36,10 @@ router.post('/:id/:team', getCollection(function (collection, res, req) {
 }));
 
 router.post('/', getCollection(function (collection, res, req) {
+    console.log(req.body);
     if (isCorrectGameRequest(req.body)) {
-        collection.insert(getGame(req.body), rh.sendResponse(res));
+        var game = getGame(req.body);
+        collection.insert(game, rh.sendResponse(res));
     }
     else
         rh.sendError(res, 400, "wrong JSON");

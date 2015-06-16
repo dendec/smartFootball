@@ -24,12 +24,10 @@ router.post('/', getCollection(function (collection, res, req) {
         rh.sendError(res, 400, "wrong JSON");
 }));
 
-router.delete('/', getCollection(function (collection, res, req) {
-    var request = req.body;
-    if (Object.keys(request).length > 0)
-        collection.remove(request, rh.sendResponse(res));
-    else
-        rh.sendError(res, 400, "wrong JSON");
+router.delete('/:rfid', getCollection(function (collection, res, req) {
+    var rfid = req.params.rfid;
+    console.log(rfid);
+    collection.remove({'rfid': rfid}, rh.sendResponse(res));
 }));
 
 router.delete('/all', getCollection(function (collection, res) {
